@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url('https://cdn.pixabay.com/photo/2015/07/05/10/18/tree-832079_960_720.jpg 1x, https://cdn.pixabay.com/photo/2015/07/05/10/18/tree-832079_1280.jpg');  
+      background-repeat: no-repeat;
+      background-attachment: fixed;  
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .title-bar {
+      background-color: #0079bf;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+    }
+    
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .card {
+      position: relative;
+      width: 300px;
+      background-color: #1d1d1d;
+      border-radius: 10px;
+      box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.1);
+      margin: 10px;
+      padding: 20px;
+      transition: box-shadow 0.3s ease-in-out;
+    }
+    
+    .card:hover {
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .card h3 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #ffffff;
+    }
+    
+    .card p {
+      margin-bottom: 0;
+      color: #d8d8d8;
+    }
+
+    button{
+      background-color: #1d1d1d;
+      border: none;
+      border-radius: 50%;
+      width: 75px;
+      height: 75px;
+      position: fixed;
+      bottom: 20px;
+      right: 20px; 
+      color: #ffffff;
+      font-size: 50px;
+      cursor: pointer;
+    }
+    .remove-button,
+    .edit-button {
+      position: absolute;
+      top: 5px;
+      width: 30px;
+      height: 30px;
+      font-size: 18px;
+      background-color: #555555;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      outline: none;
+      font-weight: bold;
+    }
+
+    .remove-button {
+      right: 5px; /* Adjust the spacing between buttons as needed */
+    }
+
+    .edit-button {
+      right: 40px;
+    }
+
+    .close-button::before {
+      content: "\2716"; /* Unicode character for "✖️" times symbol */
+      top: 7px;
+      left: 8px;
+      font-size: 16px;
+    }
+
+    .edit-button::before {
+      content: "\270E"; /* Unicode character for "✏️" pencil icon */
+      top: 7px;
+      left: 8px;
+      font-size: 16px;
+    }
+
+    .hidden {
+      display: none;
+    }
+    #popupForm,#popupForm1 {
+      position: fixed;
+      top: 75%;
+      left: 50%;  
+      color: #fff;
+      transform: translate(-50%, -50%);
+      background-color: #1d1d1d;
+      padding: 20px;
+      border: 3px solid #0079bf;
+      border-radius: 20px;
+    }
+    
+    #popupForm1{
+      top: 50%;
+    }
+
+    input[type="submit"] {
+      background-color: #0079bf;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    input[type="submit"]:hover {
+      background-color: #025c91;
+    }
+    input[type="submit"]:focus {
+      outline: none;
+    }
+    input[type="submit"]:active {
+      background-color: #018cdd;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="title-bar">
+    <h1>Teachers</h1>
+  </div>
+  
+  <div class="card-container" id="cardContainer"></div>
+
+  <button id="addButton">+</button>
+
+  <div id="popupForm" class="hidden">
+    <h2>Add a teacher</h2>
+    <form id="teacherForm">
+      <label for="name">Name:</label>
+      <input type="text" id="name" required>
+      <label for="address"> Address:</label>
+      <input type="text" id="address" required>
+      <label for="schoolName"> School:</label>
+      <input type="text" id="schoolName" required>
+      <input type="submit" value="Submit">
+    </form>
+  </div>
+
+  <div id="popupForm1" class="hidden">
+    <button class="remove-button" onclick="hideForm()">X</button>
+    <h2 id="editHeader">Edit teacher"</h2>
+    <form id="teacherEditForm">
+      <label for="id">ID:</label>
+      <input style="width: 20px;" type="text" id="nonEditableField" readonly>
+      <br>
+      <br>
+      <label for="name">Name:</label>
+      <input type="text" id="ename" required>
+      <label for="address"> Address:</label>
+      <input type="text" id="eaddress" required>
+      <label for="schoolName"> School:</label>
+      <input type="text" id="eschoolName" required>
+      <input type="submit" value="Submit">
+    </form>
+  </div>
+
+  <script>
+    //get request to get all teachers
+    var url = "http://localhost:8080/teacher/all";
+    var cardContainer = document.getElementById("cardContainer");
+    fetch(url)
+      .then(response => response.json())
+      .then(jsonData => {
+        for (var i = 0; i < jsonData.length; i++) {
+          var card = document.createElement('div');
+          card.className = 'card';
+          card.id = jsonData[i].id;
+          card.innerHTML = `
+            <button class="edit-button" onclick="editCard(this)"></button>
+            <button class="remove-button" onclick="removeCard(this)">X</button>
+            <h3>${jsonData[i].name}</h3>
+            <p>ID: ${jsonData[i].id}</p>
+            <p>Address: ${jsonData[i].address}</p>
+            <p>School Name: ${jsonData[i].schoolName}</p>
+          `;
+          cardContainer.appendChild(card);
+        }
+      })
+      .catch(error => {
+        console.log("Error:", error);
+      });
+
+      //a form to add a new teacher
+      const showFormBtn = document.getElementById("addButton");
+      const popupForm = document.getElementById("popupForm");
+      showFormBtn.addEventListener("click", () => {
+        popupForm.classList.remove("hidden");
+      });
+      const teacherForm = document.getElementById("teacherForm");
+      teacherForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        // Retrieve form values
+        const name = document.getElementById("name").value;
+        const address = document.getElementById("address").value;
+        const schoolName = document.getElementById("schoolName").value;
+
+        addTeacher(name, address, schoolName)
+
+        // Clear the form and hide the popup
+        teacherForm.reset();
+        popupForm.classList.add("hidden");
+        setTimeout(function() {
+          location.reload();
+        }, 2000);
+      });
+
+      const teacherEditForm = document.getElementById("teacherEditForm");
+      teacherEditForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        // Retrieve form values
+        const id = document.getElementById("nonEditableField").value
+        const name = document.getElementById("ename").value;
+        const address = document.getElementById("eaddress").value;
+        const schoolName = document.getElementById("eschoolName").value;
+
+        editTeacher(id, name, address, schoolName)
+
+        // Clear the form and hide the popup
+        teacherEditForm.reset();
+        document.getElementById("popupForm1").classList.add("hidden");
+        setTimeout(function() {
+          location.reload();
+        }, 2000);
+      });
+
+      // Event listener to close the form when clicking outside
+      document.addEventListener("click", (event) => {
+        // Check if the click target is outside the form div or the button that shows the form
+        if (!popupForm.contains(event.target) && event.target !== showFormBtn) {
+          popupForm.classList.add("hidden");
+        }
+      });
+
+      function addTeacher(name, address, schoolName) {
+        var data = {
+          name: name,
+          address: address,
+          schoolName: schoolName
+        };
+        var jsonData = JSON.stringify(data);
+
+        // Configure the request
+        fetch('http://localhost:8080/teacher', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json' // Set the Content-Type header to indicate JSON data
+          },
+          body: jsonData // Pass jsonData as the request body
+        })
+        .then(response => {
+          if (response.ok) {
+            // The server responded with a successful status code (e.g., 200-299)
+            window.alert("New Teacher Added:\n" + name + "\n" + address + "\n" + schoolName);
+            return response.json(); // If the server returns JSON data, parse it
+          } else {
+            // The server responded with an error status code
+            window.alert("Failed to add new teacher");
+            throw new Error('Failed to add the teacher.');
+          }
+        }) 
+        // If the server responds with JSON data
+        .then(responseData => {
+          // responseData contains the response from the server (if it returns JSON data)
+          console.log(responseData);
+        })
+        .catch(error => {
+          // Handle any errors that occurred during the fetch request
+          window.alert("an error occured: ", error);
+          console.error('Error:', error);
+        });
+      }
+
+      //removing a teacher
+      function removeCard(button) {
+            var parentDiv = button.parentNode;
+            var id = parentDiv.id;
+            const url = 'http://localhost:8080/teacher?id='+id;
+            fetch(url, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                // Add any additional headers if required, e.g., authorization token
+              },
+            })
+            .then(response => {
+              if (!response.ok) {
+                window.alert('faild to delete teacher');
+                throw new Error('Network response was not ok');
+              }
+            })
+            .then(data => {
+              window.alert('teacher deleted successfully');
+              console.log('Resource deleted successfully:', data);
+              
+            })
+            .catch(error => {
+              window.alert("an error occured: ", error);
+              console.error('Error deleting resource:', error);
+            });
+            setTimeout(function() {
+              location.reload();
+            }, 2000);
+      }
+
+      function editCard(button){
+        var parentDiv = button.parentNode;
+        var id = parentDiv.id;
+        editForm = document.getElementById('popupForm1');
+        editForm.classList.remove("hidden")
+        
+        document.getElementById("nonEditableField").value = id
+        const url = 'http://localhost:8080/teacher?id='+id;
+      }
+
+      function hideForm(){
+        document.getElementById('popupForm1').classList.add("hidden")
+      }
+
+      function editTeacher(id,name,address,schoolName){
+        var data = {
+          id: id,
+          name: name,
+          address: address,
+          schoolName: schoolName
+        };
+        var jsonData = JSON.stringify(data);
+
+        // Configure the request
+        fetch('http://localhost:8080/teacher', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json' // Set the Content-Type header to indicate JSON data
+          },
+          body: jsonData // Pass jsonData as the request body
+        })
+        .then(response => {
+          if (response.ok) {
+            // The server responded with a successful status code (e.g., 200-299)
+            window.alert("Teacher with ID " + id + " is edited\n" + name + "\n" + address + "\n" + schoolName);
+            return response.json(); // If the server returns JSON data, parse it
+          } else {
+            // The server responded with an error status code
+            window.alert("Failed to edit teacher");
+            throw new Error('Failed to edit the teacher.');
+          }
+        }) 
+        // If the server responds with JSON data
+        .then(responseData => {
+          // responseData contains the response from the server (if it returns JSON data)
+          console.log(responseData);
+        })
+        .catch(error => {
+          // Handle any errors that occurred during the fetch request
+          window.alert("an error occured: ", error);
+          console.error('Error:', error);
+        });
+      }
+      
+  </script>
+</body>
+</html>
